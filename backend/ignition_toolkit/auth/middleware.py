@@ -229,7 +229,9 @@ class RemoteAccessAuthMiddleware:
         if validated is None:
             logger.warning(
                 "Rejected unauthenticated non-loopback request: %s %s from %s",
-                scope.get("method", "?"), path, peer,
+                scope.get("method", "?"),
+                path,
+                peer,
             )
             get_audit_logger().log(
                 event_type=AuditEventType.AUTH_FAILED,

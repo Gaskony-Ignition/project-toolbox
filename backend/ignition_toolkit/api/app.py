@@ -21,7 +21,6 @@ from fastapi.staticfiles import StaticFiles
 
 from ignition_toolkit import __version__
 from ignition_toolkit.api.middleware import RateLimitMiddleware
-from ignition_toolkit.auth.middleware import RemoteAccessAuthMiddleware
 from ignition_toolkit.api.routers import health_router
 from ignition_toolkit.api.routers.api_explorer import router as api_explorer_router
 from ignition_toolkit.api.routers.audit import router as audit_router
@@ -43,6 +42,7 @@ from ignition_toolkit.api.routers.udt import router as udt_router
 from ignition_toolkit.api.routers.updates import router as updates_router
 from ignition_toolkit.api.routers.websockets import router as websockets_router
 from ignition_toolkit.api.services.log_capture import setup_log_capture
+from ignition_toolkit.auth.middleware import RemoteAccessAuthMiddleware
 from ignition_toolkit.playbook.engine import PlaybookEngine
 from ignition_toolkit.playbook.metadata import PlaybookMetadataStore
 from ignition_toolkit.startup.lifecycle import lifespan
@@ -156,8 +156,7 @@ app.add_middleware(RemoteAccessAuthMiddleware)
 # ALLOWED_ORIGINS; that value was previously never read by anything. It is read
 # here now. The fallback covers the dev servers and is still origin-specific.
 _default_origins = (
-    "http://localhost:5000,http://127.0.0.1:5000,"
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "http://localhost:5000,http://127.0.0.1:5000," "http://localhost:3000,http://127.0.0.1:3000"
 )
 allowed_origins = [
     origin.strip()
