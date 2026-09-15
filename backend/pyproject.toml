@@ -1,0 +1,125 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ignition-toolkit"
+version = "3.7.0"  # Updated: 2026-07-28
+description = "Lightweight automation toolkit for Ignition SCADA Gateway operations with plugin-based playbook library"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Nigel G", email = "your-email@example.com"}
+]
+keywords = ["ignition", "scada", "automation", "testing", "playwright"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Monitoring",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "alembic>=1.14.0",
+    "sqlalchemy>=2.0.35",
+    "aiosqlite>=0.20.0",
+    "pyyaml>=6.0.2",
+    "cryptography>=44.0.0",
+    # 1.62.0 is the first release with a browser build mapping for Ubuntu
+    # 26.04; older ones refuse `playwright install` outright on it, so a
+    # resolve that lands below this floor cannot obtain a browser at all.
+    "playwright>=1.62.0",
+    "python-multipart>=0.0.18",
+    "python-dotenv>=1.0.1",
+    "websockets>=14.0",
+    "click>=8.1.7",
+    "rich>=13.9.0",
+    "apscheduler>=3.10.4,<4.0",
+    "psutil>=6.1.0",
+    "pillow>=10.0.0",  # WebP screenshot compression
+    "mcp>=1.0.0,<2.0",  # MCP server for Claude Code integration
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    # Pinned to match the CI lint job — a newer formatter would reformat the
+    # tree locally and then fail black --check in CI. Bump both together with
+    # the resulting reformat commit.
+    "black==26.5.1",
+    "ruff==0.15.18",
+    "mypy>=1.13.0",
+]
+ai = [
+    "anthropic>=0.42.0",
+]
+
+[project.scripts]
+ignition-toolkit = "ignition_toolkit.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Gaskony-Ignition/ignition-toolbox"
+Documentation = "https://github.com/Gaskony-Ignition/ignition-toolbox/docs"
+Repository = "https://github.com/Gaskony-Ignition/ignition-toolbox"
+Issues = "https://github.com/Gaskony-Ignition/ignition-toolbox/issues"
+
+[tool.setuptools]
+packages = ["ignition_toolkit"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312', 'py313']
+# Golden snapshots are expected generator OUTPUT, compared byte-for-byte.
+# Formatting them rewrites the expected value and breaks the tests.
+extend-exclude = 'tests/test_stackbuilder/goldens/'
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+# See the black note above — these are fixtures, not source.
+extend-exclude = ["tests/test_stackbuilder/goldens"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = [
+    "E501",  # line too long — handled by formatter if needed
+    "E402",  # module-level import not at top — intentional in several files
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests legitimately bind PascalCase mock classes and UPPER_CASE fixture
+# constants inside test functions.
+"tests/**" = ["N806"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+asyncio_mode = "auto"
+filterwarnings = [
+    # TestSuiteModel is a SQLAlchemy model in source code, not a test class
+    "ignore::pytest.PytestCollectionWarning:ignition_toolkit.storage.models",
+]
+markers = [
+    "integration: Integration tests requiring external services",
+    "slow: Slow running tests",
+]

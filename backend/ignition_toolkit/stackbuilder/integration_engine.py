@@ -1,0 +1,649 @@
+"""
+Integration Engine for Stack Builder
+
+Handles automatic service integration detection and configuration generation.
+Ported from ignition-stack-builder project. Supports remote updates via
+RemoteDataManager.
+"""
+
+import json
+import logging
+import sys
+from pathlib import Path
+from typing import Any
+
+from ignition_toolkit.core.remote_data import RemoteDataConfig, RemoteDataManager
+from ignition_toolkit.core.remote_data_registry import RemoteDataRegistry
+
+logger = logging.getLogger(__name__)
+
+
+def _get_data_path(filename: str) -> Path:
+    """Get path to a stackbuilder data file, handling frozen mode."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "stackbuilder" / "data" / filename
+    return Path(__file__).parent / "data" / filename
+
+
+class IntegrationEngine:
+    """
+    Core engine for managing service integrations.
+
+    When no integrations_path is provided, uses RemoteDataManager for
+    automatic remote update support. When integrations_path is explicitly
+    provided (e.g. in tests), reads directly from that path.
+    """
+
+    def __init__(self, integrations_path: Path | None = None):
+        """
+        Initialize the integration engine
+
+        Args:
+            integrations_path: Path to integrations.json. If provided, uses
+                direct file mode (for testing). If None, uses RemoteDataManager mode.
+        """
+        if integrations_path is not None:
+            # Direct path mode (testing)
+            self.integrations_path = integrations_path
+            self._manager: RemoteDataManager | None = None
+        else:
+            # RemoteDataManager mode (production)
+            self.integrations_path = None
+            config = RemoteDataConfig(
+                component_name="stackbuilder_integrations",
+                filename="integrations.json",
+                github_path="data/stackbuilder/integrations.json",
+                bundled_path_fn=lambda: _get_data_path("integrations.json"),
+                on_update=lambda: setattr(self, "_integrations", None),
+            )
+            self._manager = RemoteDataManager(config)
+            RemoteDataRegistry.register(self._manager)
+
+        self._integrations: dict[str, Any] | None = None
+
+    def _load_integrations(self) -> dict[str, Any]:
+        """Load integrations configuration from JSON file or RemoteDataManager"""
+        if self._manager:
+            # RemoteDataManager mode: load from user data dir or bundled
+            try:
+                data = self._manager.load()
+                if isinstance(data, dict):
+                    return data
+                return {}
+            except Exception as e:
+                logger.error("Failed to load integrations via RemoteDataManager: %s", e)
+                return {}
+
+        # Direct file mode (testing)
+        try:
+            with open(self.integrations_path, encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            logger.error(f"Integrations file not found: {self.integrations_path}")
+            return {}
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing integrations file: {e}")
+            return {}
+
+    @property
+    def integrations(self) -> dict[str, Any]:
+        """Get integrations config (lazy-loaded)"""
+        if self._integrations is None:
+            self._integrations = self._load_integrations()
+        return self._integrations
+
+    @property
+    def integration_types(self) -> dict[str, Any]:
+        return self.integrations.get("integration_types", {})
+
+    @property
+    def service_capabilities(self) -> dict[str, Any]:
+        return self.integrations.get("service_capabilities", {})
+
+    @property
+    def integration_rules(self) -> dict[str, Any]:
+        return self.integrations.get("integration_rules", {})
+
+    @property
+    def config_templates(self) -> dict[str, Any]:
+        return self.integrations.get("config_templates", {})
+
+    def detect_integrations(self, instances: list[dict]) -> dict[str, Any]:
+        """
+        Detect all possible integrations based on selected services
+
+        Args:
+            instances: List of instance configurations with app_id, instance_name, config
+
+        Returns:
+            Dictionary containing detected integrations, conflicts, and recommendations
+        """
+        result: dict[str, Any] = {
+            "integrations": {},
+            "conflicts": [],
+            "warnings": [],
+            "recommendations": [],
+            "auto_add_services": [],
+        }
+
+        # Get list of selected service IDs
+        selected_services = [inst["app_id"] for inst in instances]
+
+        # Check mutual exclusivity
+        conflicts = self.check_mutual_exclusivity(selected_services)
+        result["conflicts"] = conflicts
+
+        # Check dependencies
+        deps = self.check_dependencies(selected_services, instances)
+        result["warnings"].extend(deps["warnings"])
+        result["auto_add_services"] = deps["auto_add"]
+
+        # Detect available integrations
+        for integration_type, type_config in self.integration_types.items():
+            providers = [s for s in selected_services if s in type_config.get("providers", [])]
+
+            if providers:
+                if integration_type == "reverse_proxy":
+                    result["integrations"][integration_type] = self._detect_reverse_proxy(
+                        providers[0], selected_services, instances
+                    )
+                elif integration_type == "oauth_provider":
+                    result["integrations"][integration_type] = self._detect_oauth(
+                        providers, selected_services, instances
+                    )
+                elif integration_type == "db_provider":
+                    result["integrations"][integration_type] = self._detect_database(
+                        providers, selected_services, instances
+                    )
+                elif integration_type == "mqtt_broker":
+                    result["integrations"][integration_type] = self._detect_mqtt(
+                        providers, selected_services, instances
+                    )
+                elif integration_type == "visualization":
+                    result["integrations"][integration_type] = self._detect_visualization(
+                        providers, selected_services, instances
+                    )
+                elif integration_type == "email_testing":
+                    result["integrations"][integration_type] = self._detect_email(
+                        providers, selected_services, instances
+                    )
+
+        # Get recommendations
+        recommendations = self.get_recommendations(selected_services)
+        result["recommendations"] = recommendations
+
+        return result
+
+    def check_mutual_exclusivity(self, selected_services: list[str]) -> list[dict]:
+        """Check for mutually exclusive service conflicts"""
+        conflicts = []
+
+        exclusivity_rules = self.integration_rules.get("mutual_exclusivity", [])
+
+        for rule in exclusivity_rules:
+            group_services = rule["services"]
+            selected_from_group = [s for s in selected_services if s in group_services]
+
+            if len(selected_from_group) > 1:
+                conflict = {
+                    "group": rule["group"],
+                    "services": selected_from_group,
+                    "message": rule["message"],
+                    "level": rule.get("level", "error"),
+                }
+                conflicts.append(conflict)
+
+        return conflicts
+
+    def check_dependencies(self, selected_services: list[str], instances: list[dict]) -> dict:
+        """Check for missing dependencies and requirements"""
+        result: dict[str, list] = {"warnings": [], "auto_add": []}
+
+        dependency_rules = self.integration_rules.get("dependencies", [])
+
+        for rule in dependency_rules:
+            service = rule["service"]
+
+            if service not in selected_services:
+                continue
+
+            # Check hard requirements
+            if "requires" in rule:
+                req = rule["requires"]
+                req_type = req.get("type")
+
+                providers = self._find_providers(req_type, selected_services)
+
+                if not providers:
+                    if req.get("auto_add", False):
+                        preferred = req.get("preferred")
+                        if preferred:
+                            result["auto_add"].append(
+                                {
+                                    "service": preferred,
+                                    "reason": req.get("message", f"{service} requires {preferred}"),
+                                }
+                            )
+                    else:
+                        result["warnings"].append(
+                            {
+                                "service": service,
+                                "message": req.get("message", f"{service} requires {req_type}"),
+                                "level": "error",
+                            }
+                        )
+
+            # Check recommendations
+            if "recommends" in rule:
+                rec = rule["recommends"]
+                rec_type = rec.get("type")
+
+                providers = self._find_providers(rec_type, selected_services)
+
+                if not providers:
+                    result["warnings"].append(
+                        {
+                            "service": service,
+                            "message": rec.get("message", f"{service} recommends {rec_type}"),
+                            "level": rec.get("level", "warning"),
+                        }
+                    )
+
+        return result
+
+    def get_recommendations(self, selected_services: list[str]) -> list[dict]:
+        """Get recommendations for additional services based on current selection"""
+        recommendations = []
+
+        rec_rules = self.integration_rules.get("recommendations", [])
+
+        for rule in rec_rules:
+            if_selected = rule.get("if_selected", [])
+            if_not_selected = rule.get("if_not_selected", [])
+
+            if if_selected and all(s in selected_services for s in if_selected):
+                if if_not_selected and all(s not in selected_services for s in if_not_selected):
+                    recommendations.append(
+                        {
+                            "message": rule["message"],
+                            "level": rule.get("level", "info"),
+                            "suggest": rule.get("suggest", []),
+                        }
+                    )
+                elif "suggest" in rule and not if_not_selected:
+                    missing = [s for s in rule["suggest"] if s not in selected_services]
+                    if missing:
+                        recommendations.append(
+                            {
+                                "message": rule["message"],
+                                "level": rule.get("level", "info"),
+                                "suggest": missing,
+                            }
+                        )
+
+            if "suggest_for" in rule:
+                suggest_for = rule["suggest_for"]
+                if if_selected and all(s in selected_services for s in if_selected):
+                    applicable = [s for s in suggest_for if s in selected_services]
+                    if applicable:
+                        recommendations.append(
+                            {
+                                "message": rule["message"],
+                                "level": rule.get("level", "info"),
+                                "applies_to": applicable,
+                            }
+                        )
+
+        return recommendations
+
+    def _find_providers(self, integration_type: str, selected_services: list[str]) -> list[str]:
+        """Find services that provide a specific integration type"""
+        providers = []
+
+        type_config = self.integration_types.get(integration_type, {})
+        type_providers = type_config.get("providers", [])
+
+        for service in selected_services:
+            if service in type_providers:
+                providers.append(service)
+
+        return providers
+
+    def _detect_reverse_proxy(
+        self, provider: str, selected_services: list[str], instances: list[dict]
+    ) -> dict:
+        """Detect reverse proxy integrations"""
+        integration: dict[str, Any] = {
+            "provider": provider,
+            "targets": [],
+            "method": None,
+            "config": {},
+        }
+
+        provider_caps = self.service_capabilities.get(provider, {})
+        provider_integration = provider_caps.get("integrations", {}).get("reverse_proxy", {})
+        integration["method"] = provider_integration.get("method", "docker_labels")
+
+        type_config = self.integration_types.get("reverse_proxy", {})
+        auto_targets = type_config.get("auto_configure_targets", [])
+
+        for service_id in selected_services:
+            if service_id == provider:
+                continue
+
+            if service_id in auto_targets:
+                service_caps = self.service_capabilities.get(service_id, {})
+                service_integration = service_caps.get("integrations", {}).get("reverse_proxy", {})
+
+                if service_integration:
+                    instance = next((i for i in instances if i["app_id"] == service_id), None)
+                    if instance:
+                        custom_name = instance.get("config", {}).get("name")
+                        subdomain = custom_name or instance.get("instance_name") or service_id
+
+                        target = {
+                            "service_id": service_id,
+                            "instance_name": instance.get("instance_name"),
+                            "ports": service_integration.get("ports", []),
+                            "default_subdomain": subdomain,
+                            "health_check": service_integration.get("health_check"),
+                        }
+                        integration["targets"].append(target)
+
+        return integration
+
+    def _detect_oauth(
+        self, providers: list[str], selected_services: list[str], instances: list[dict]
+    ) -> dict:
+        """Detect OAuth/SSO integrations"""
+        integration: dict[str, Any] = {"providers": [], "clients": []}
+
+        for provider_id in providers:
+            # Build provider info dict (matching db_provider format)
+            instance = next((i for i in instances if i["app_id"] == provider_id), None)
+            if instance:
+                integration["providers"].append(
+                    {
+                        "service_id": provider_id,
+                        "instance_name": instance.get("instance_name"),
+                        "config": instance.get("config", {}),
+                    }
+                )
+            provider_caps = self.service_capabilities.get(provider_id, {})
+            provider_integration = provider_caps.get("integrations", {}).get("oauth_provider", {})
+
+            if not provider_integration:
+                continue
+
+            client_configs = provider_integration.get("client_configs", {})
+
+            for service_id in selected_services:
+                service_caps = self.service_capabilities.get(service_id, {})
+                service_integration = service_caps.get("integrations", {}).get("oauth_provider", {})
+
+                if service_integration and service_integration.get("type") == "client":
+                    supports = service_integration.get("supports", [])
+
+                    if provider_id in supports:
+                        instance = next((i for i in instances if i["app_id"] == service_id), None)
+                        if instance:
+                            client = {
+                                "service_id": service_id,
+                                "instance_name": instance.get("instance_name"),
+                                "provider": provider_id,
+                                "env_vars": service_integration.get("env_vars", {}),
+                                "client_config": client_configs.get(service_id, {}),
+                            }
+                            integration["clients"].append(client)
+
+        return integration
+
+    def _detect_database(
+        self, providers: list[str], selected_services: list[str], instances: list[dict]
+    ) -> dict:
+        """Detect database integrations"""
+        integration: dict[str, Any] = {"providers": [], "clients": []}
+
+        for provider_id in providers:
+            instance = next((i for i in instances if i["app_id"] == provider_id), None)
+            if instance:
+                provider_caps = self.service_capabilities.get(provider_id, {})
+                provider_integration = provider_caps.get("integrations", {}).get("db_provider", {})
+
+                provider_info = {
+                    "service_id": provider_id,
+                    "instance_name": instance.get("instance_name"),
+                    "config": instance.get("config", {}),
+                    "jdbc_url_template": provider_integration.get("jdbc_url_template"),
+                    "default_port": provider_integration.get("default_port"),
+                }
+                integration["providers"].append(provider_info)
+
+        for service_id in selected_services:
+            service_caps = self.service_capabilities.get(service_id, {})
+            service_integration = service_caps.get("integrations", {}).get("db_provider", {})
+
+            if service_integration and service_integration.get("type") == "client":
+                instance = next((i for i in instances if i["app_id"] == service_id), None)
+                if instance:
+                    client = {
+                        "service_id": service_id,
+                        "instance_name": instance.get("instance_name"),
+                        "supports": service_integration.get("supports", []),
+                        "auto_register": service_integration.get("auto_register", False),
+                        "jdbc_drivers": service_integration.get("jdbc_drivers", {}),
+                    }
+
+                    compatible_providers = [
+                        p for p in integration["providers"] if p["service_id"] in client["supports"]
+                    ]
+                    client["matched_providers"] = compatible_providers
+
+                    integration["clients"].append(client)
+
+        return integration
+
+    def _detect_mqtt(
+        self, providers: list[str], selected_services: list[str], instances: list[dict]
+    ) -> dict:
+        """Detect MQTT broker integrations"""
+        integration: dict[str, Any] = {"providers": [], "clients": []}
+
+        for provider_id in providers:
+            instance = next((i for i in instances if i["app_id"] == provider_id), None)
+            if instance:
+                provider_caps = self.service_capabilities.get(provider_id, {})
+                provider_integration = provider_caps.get("integrations", {}).get("mqtt_broker", {})
+
+                provider_info = {
+                    "service_id": provider_id,
+                    "instance_name": instance.get("instance_name"),
+                    "mqtt_port": provider_integration.get("mqtt_port", 1883),
+                    "ws_port": provider_integration.get("ws_port"),
+                }
+                integration["providers"].append(provider_info)
+
+        for service_id in selected_services:
+            service_caps = self.service_capabilities.get(service_id, {})
+            service_integration = service_caps.get("integrations", {}).get("mqtt_broker", {})
+
+            if service_integration and service_integration.get("type") == "client":
+                instance = next((i for i in instances if i["app_id"] == service_id), None)
+                if instance:
+                    client = {
+                        "service_id": service_id,
+                        "instance_name": instance.get("instance_name"),
+                        "supports": service_integration.get("supports", []),
+                        "requires_module": service_integration.get("requires_module"),
+                        "config_file": service_integration.get("config_file"),
+                    }
+
+                    compatible_providers = [
+                        p for p in integration["providers"] if p["service_id"] in client["supports"]
+                    ]
+                    client["matched_providers"] = compatible_providers
+
+                    integration["clients"].append(client)
+
+        return integration
+
+    def _detect_visualization(
+        self, providers: list[str], selected_services: list[str], instances: list[dict]
+    ) -> dict:
+        """Detect visualization (Grafana) datasource integrations"""
+        integration: dict[str, Any] = {"provider": None, "datasources": []}
+
+        if not providers:
+            return integration
+
+        # `providers` holds app_ids (e.g. "grafana"); resolve the actual instance_name
+        # so downstream config-file paths and hostnames use the real container name,
+        # not the catalog id (which breaks whenever the instance isn't named "grafana").
+        provider_app_id = providers[0]
+        provider_instance = next((i for i in instances if i["app_id"] == provider_app_id), None)
+        integration["provider"] = (
+            provider_instance.get("instance_name") if provider_instance else provider_app_id
+        )
+
+        provider_caps = self.service_capabilities.get(provider_app_id, {})
+        provider_integration = provider_caps.get("integrations", {}).get("visualization", {})
+        datasource_types = provider_integration.get("datasource_types", {})
+
+        for service_id in selected_services:
+            if service_id in datasource_types:
+                instance = next((i for i in instances if i["app_id"] == service_id), None)
+                if instance:
+                    datasource = {
+                        "service_id": service_id,
+                        "instance_name": instance.get("instance_name"),
+                        "type": datasource_types[service_id],
+                        "config": instance.get("config", {}),
+                    }
+                    integration["datasources"].append(datasource)
+
+        return integration
+
+    def _detect_email(
+        self, providers: list[str], selected_services: list[str], instances: list[dict]
+    ) -> dict:
+        """Detect email testing (MailHog) integrations"""
+        integration: dict[str, Any] = {"provider": None, "clients": []}
+
+        if not providers:
+            return integration
+
+        # `providers` holds app_ids (e.g. "mailhog"); resolve the actual instance_name
+        # so the SMTP host env vars generated for clients point at the real container
+        # name, not the catalog id (which breaks whenever the instance isn't named
+        # "mailhog").
+        provider_app_id = providers[0]
+        provider_instance = next((i for i in instances if i["app_id"] == provider_app_id), None)
+        integration["provider"] = (
+            provider_instance.get("instance_name") if provider_instance else provider_app_id
+        )
+
+        for service_id in selected_services:
+            service_caps = self.service_capabilities.get(service_id, {})
+            service_integration = service_caps.get("integrations", {}).get("email_testing", {})
+
+            if service_integration and service_integration.get("type") == "client":
+                instance = next((i for i in instances if i["app_id"] == service_id), None)
+                if instance:
+                    client = {
+                        "service_id": service_id,
+                        "instance_name": instance.get("instance_name"),
+                        "env_vars": service_integration.get("env_vars", {}),
+                    }
+                    integration["clients"].append(client)
+
+        return integration
+
+    def generate_traefik_labels(
+        self,
+        service_name: str,
+        subdomain: str,
+        port: int,
+        domain: str = "localhost",
+        https: bool = False,
+    ) -> list[str]:
+        """Generate Traefik labels for a service"""
+        template = self.config_templates.get(
+            "traefik_https_label" if https else "traefik_label", []
+        )
+
+        labels = []
+        for label_template in template:
+            label = label_template.format(
+                service_name=service_name, subdomain=subdomain, domain=domain, port=port
+            )
+            labels.append(label)
+
+        return labels
+
+    def get_integration_summary(self, detection_result: dict) -> list[str]:
+        """Generate a list of human-readable summary items for detected integrations"""
+        items: list[str] = []
+
+        integrations = detection_result.get("integrations", {})
+
+        if "reverse_proxy" in integrations:
+            rp = integrations["reverse_proxy"]
+            target_count = len(rp.get("targets", []))
+            items.append(
+                f"Reverse Proxy: {rp['provider']} \u2014 {target_count} service{'s' if target_count != 1 else ''} configured"
+            )
+
+        if "oauth_provider" in integrations:
+            oauth = integrations["oauth_provider"]
+            provider_names = [p["service_id"] for p in oauth.get("providers", [])]
+            client_count = len(oauth.get("clients", []))
+            items.append(
+                f"OAuth/SSO: {', '.join(provider_names)} \u2014 {client_count} client{'s' if client_count != 1 else ''} configured"
+            )
+
+        if "db_provider" in integrations:
+            db = integrations["db_provider"]
+            for provider in db.get("providers", []):
+                auto_clients = [c for c in db.get("clients", []) if c.get("auto_register")]
+                suffix = " \u2014 auto-registration enabled" if auto_clients else ""
+                items.append(f"Database: {provider['instance_name']}{suffix}")
+
+        if "mqtt_broker" in integrations:
+            mqtt = integrations["mqtt_broker"]
+            provider_count = len(mqtt.get("providers", []))
+            client_count = len(mqtt.get("clients", []))
+            if provider_count > 0:
+                provider_name = mqtt["providers"][0].get("instance_name", "mqtt")
+                items.append(
+                    f"MQTT Broker: {provider_name} \u2014 {client_count} client{'s' if client_count != 1 else ''}"
+                )
+
+        if "visualization" in integrations:
+            viz = integrations["visualization"]
+            ds_count = len(viz.get("datasources", []))
+            if viz.get("provider"):
+                items.append(
+                    f"Visualization: {viz['provider']} \u2014 {ds_count} datasource{'s' if ds_count != 1 else ''}"
+                )
+
+        if "email_testing" in integrations:
+            email = integrations["email_testing"]
+            client_count = len(email.get("clients", []))
+            if email.get("provider"):
+                items.append(
+                    f"Email Testing: {email['provider']} \u2014 {client_count} client{'s' if client_count != 1 else ''}"
+                )
+
+        return items
+
+
+# Singleton instance
+_engine: IntegrationEngine | None = None
+
+
+def get_integration_engine() -> IntegrationEngine:
+    """Get or create the integration engine singleton"""
+    global _engine
+    if _engine is None:
+        _engine = IntegrationEngine()
+    return _engine

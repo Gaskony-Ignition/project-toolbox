@@ -1,0 +1,89 @@
+appId: com.ignition-toolbox.app
+productName: Ignition Toolbox
+copyright: Copyright © 2024-2026 Nigel G
+
+directories:
+  buildResources: resources
+  output: release
+
+files:
+  - dist-electron/**/*
+  - frontend/dist/**/*
+
+extraResources:
+  # Include frozen Python backend (built by PyInstaller)
+  - from: backend/dist/backend
+    to: backend
+    filter:
+      - "**/*"
+  # Include pre-installed Playwright browsers (avoids runtime download)
+  - from: playwright-browsers
+    to: playwright-browsers
+    filter:
+      - "**/*"
+
+# Windows configuration
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.ico
+  # Literal 'Ignition-Toolbox', NOT ${productName}: productName has a space,
+  # which electron-builder writes as a dash in latest.yml but GitHub's asset
+  # upload sanitises to a dot — the two disagree and auto-update 404s
+  # (regressed v3.4.1). A space-free name keeps local file == latest.yml URL
+  # == uploaded asset. Display name (app, shortcuts, installer) is unaffected.
+  artifactName: Ignition-Toolbox-Setup-${version}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Ignition Toolbox
+  uninstallDisplayName: Ignition Toolbox
+  license: LICENSE
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+
+# macOS configuration
+mac:
+  target:
+    - target: dmg
+  icon: resources/icon.icns
+  category: public.app-category.developer-tools
+  identity: null
+  entitlementsInherit: resources/entitlements.mac.plist
+  # Space-free literal name — see the win artifactName comment.
+  artifactName: Ignition-Toolbox-${version}-${arch}.${ext}
+
+dmg:
+  sign: false
+
+# Linux configuration
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  icon: resources/icon.png
+  category: Development
+  # Space-free literal name — see the win artifactName comment.
+  artifactName: Ignition-Toolbox-${version}-${arch}.${ext}
+
+# Auto-update configuration
+publish:
+  provider: github
+  owner: Gaskony-Ignition
+  repo: ignition-toolbox
+  releaseType: release
+
+# Compression
+compression: maximum
+
+# Remove unused locales to reduce size
+electronLanguages:
+  - en-US
