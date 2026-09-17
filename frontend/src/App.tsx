@@ -184,7 +184,14 @@ function createAppTheme(themeMode: 'dark' | 'light') {
         MuiChip: {
           styleOverrides: {
             filledPrimary: { backgroundColor: '#2563eb' },
-            filledError: { backgroundColor: '#dc2626' },
+            // Chip's generated classes don't include a named "filledError"
+            // slot (unlike Button's containedError) -- ownerState is the
+            // supported way to target variant+color combinations MUI
+            // doesn't expose as their own class.
+            root: ({ ownerState }) =>
+              ownerState.variant === 'filled' && ownerState.color === 'error'
+                ? { backgroundColor: '#dc2626' }
+                : {},
           },
         },
       }),
