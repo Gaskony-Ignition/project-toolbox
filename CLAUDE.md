@@ -60,8 +60,13 @@ platform-specific binaries, so a local build only works on the machine that
 made it. `npm run dist:*` is for local development builds only.
 
 1. Bump version in `package.json` and `frontend/package.json`, commit.
-2. `git tag v<version> && git push origin v<version>`.
-3. `build.yml` builds on 4 runners (`windows-latest`, `ubuntu-latest`,
+2. `npm run a11y:check` (`scripts/a11y-gate.js`) must pass — start the
+   backend (`cd backend && source .venv/bin/activate && python
+   run_backend.py`) and the frontend dev server (`cd frontend && npm run
+   dev`) first, since the gate checks the app it finds running at the
+   `a11y.json` URLs. `--skip-a11y-check` bypasses it.
+3. `git tag v<version> && git push origin v<version>`.
+4. `build.yml` builds on 4 runners (`windows-latest`, `ubuntu-latest`,
    `macos-latest` x64/arm64), packages with PyInstaller + electron-builder,
    publishes a GitHub Release with all installers and auto-update manifests.
 

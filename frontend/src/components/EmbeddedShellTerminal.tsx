@@ -250,19 +250,21 @@ export function EmbeddedShellTerminal({
               size="small"
               onClick={() => setShowInstructions(!showInstructions)}
               color={showInstructions ? 'primary' : 'default'}
+              aria-label="Show instructions"
+              aria-pressed={showInstructions}
             >
               <InfoIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Open in New Window">
-            <IconButton size="small" onClick={handlePopOut}>
+            <IconButton size="small" onClick={handlePopOut} aria-label="Open in new window">
               <PopOutIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Close">
-            <IconButton size="small" onClick={onClose}>
+            <IconButton size="small" onClick={onClose} aria-label="Close">
               <CloseIcon />
             </IconButton>
           </Tooltip>

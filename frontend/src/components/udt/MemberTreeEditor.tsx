@@ -61,7 +61,7 @@ function MemberNode({ member, path, depth, selectedPath, onSelect, onAddChild, o
           label={isFolder ? 'folder' : member.data_type}
           size="small"
           variant="outlined"
-          sx={{ height: 20, fontSize: '0.65rem' }}
+          sx={{ height: 20, fontSize: '0.7rem' }}
         />
         <TextField
           value={member.name}

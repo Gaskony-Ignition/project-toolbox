@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, memo } from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, ButtonBase } from '@mui/material';
 import {
   ExpandMore as ExpandIcon,
   ChevronRight as CollapseIcon,
@@ -110,11 +110,13 @@ const JsonNode = memo(function JsonNode({ data, depth, keyName, isLast = true }:
 
     return (
       <Box>
-        <Box
-          sx={{ pl: `${indent}px`, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+        <ButtonBase
+          sx={{ pl: `${indent}px`, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
           onClick={toggle}
+          aria-expanded={expanded}
+          aria-label={`${expanded ? 'Collapse' : 'Expand'} array${keyName !== undefined ? ` "${keyName}"` : ''} (${data.length} items)`}
         >
-          <IconButton size="small" sx={{ p: 0, mr: 0.5 }}>
+          <IconButton size="small" component="span" tabIndex={-1} aria-hidden="true" sx={{ p: 0, mr: 0.5 }}>
             {expanded ? <ExpandIcon sx={{ fontSize: 16 }} /> : <CollapseIcon sx={{ fontSize: 16 }} />}
           </IconButton>
           {keyName !== undefined && (
@@ -128,7 +130,7 @@ const JsonNode = memo(function JsonNode({ data, depth, keyName, isLast = true }:
           <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
             {expanded ? '[' : `[...] (${data.length} items)${comma}`}
           </Typography>
-        </Box>
+        </ButtonBase>
         {expanded && (
           <>
             {itemsToShow.map((item, i) => (
@@ -179,11 +181,13 @@ const JsonNode = memo(function JsonNode({ data, depth, keyName, isLast = true }:
 
   return (
     <Box>
-      <Box
-        sx={{ pl: `${indent}px`, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+      <ButtonBase
+        sx={{ pl: `${indent}px`, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}
         onClick={toggle}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? 'Collapse' : 'Expand'} object${keyName !== undefined ? ` "${keyName}"` : ''} (${entries.length} keys)`}
       >
-        <IconButton size="small" sx={{ p: 0, mr: 0.5 }}>
+        <IconButton size="small" component="span" tabIndex={-1} aria-hidden="true" sx={{ p: 0, mr: 0.5 }}>
           {expanded ? <ExpandIcon sx={{ fontSize: 16 }} /> : <CollapseIcon sx={{ fontSize: 16 }} />}
         </IconButton>
         {keyName !== undefined && (
@@ -197,7 +201,7 @@ const JsonNode = memo(function JsonNode({ data, depth, keyName, isLast = true }:
         <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace' }}>
           {expanded ? '{' : `{...} (${entries.length} keys)${comma}`}
         </Typography>
-      </Box>
+      </ButtonBase>
       {expanded && (
         <>
           {entries.map(([key, value], i) => (

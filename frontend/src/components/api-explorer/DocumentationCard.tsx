@@ -102,7 +102,7 @@ export function DocumentationCard({ endpoint, onTryThis, showTryThis = true }: D
                 <TableCell sx={{ py: 0.25, fontFamily: 'monospace', fontSize: '0.75rem' }}>
                   {param.name}
                   {param.required && (
-                    <Chip label="req" size="small" color="error" variant="outlined" sx={{ ml: 0.5, height: 16, fontSize: '0.6rem' }} />
+                    <Chip label="req" size="small" color="error" variant="outlined" sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }} />
                   )}
                 </TableCell>
                 <TableCell sx={{ py: 0.25, fontSize: '0.75rem', color: 'text.secondary' }}>

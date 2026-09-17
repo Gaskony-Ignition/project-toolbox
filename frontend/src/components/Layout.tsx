@@ -37,6 +37,7 @@ import {
   Code as PreviewIcon,
 } from '@mui/icons-material';
 import { useStore, type MainTab, type PlaybookSubTab, type StackSubTab } from '../store';
+import { ACCENT_TEXT } from '../theme/accentText';
 import { api } from '../api/client';
 import type { CredentialInfo } from '../types/api';
 import { useQuery } from '@tanstack/react-query';
@@ -54,15 +55,25 @@ function IgnitionToolboxIcon(props: React.ComponentProps<typeof SvgIcon>) {
   );
 }
 
-function getBadgeSx(badge: string) {
+// Brightened/darkened from the raw brand orange/purple: at this chip's small
+// size the originals landed at 4.45:1 and 3.9:1 against the tinted
+// background in dark mode, both under the 4.5:1 text floor (WCAG 1.4.3) --
+// and the same tint is much lighter in light mode, so it needs the opposite
+// (darker) adjustment instead of just the dark-mode fix reused as-is.
+const BADGE_TEXT = {
+  dark: { orange: '#ffb74d', purple: '#c084fc' },
+  light: { orange: '#92400e', purple: '#6b21a8' },
+} as const;
+
+function getBadgeSx(badge: string, themeMode: 'dark' | 'light') {
   const isOrange = badge === 'Beta';
   return {
     ml: 0.5,
     height: 18,
-    fontSize: '0.65rem',
+    fontSize: '0.7rem',
     fontWeight: 600,
     bgcolor: isOrange ? 'rgba(255, 152, 0, 0.15)' : 'rgba(147, 51, 234, 0.15)',
-    color: isOrange ? '#ff9800' : '#a855f7',
+    color: isOrange ? BADGE_TEXT[themeMode].orange : BADGE_TEXT[themeMode].purple,
     border: isOrange ? '1px solid rgba(255, 152, 0, 0.3)' : '1px solid rgba(147, 51, 234, 0.3)',
   };
 }
@@ -93,6 +104,8 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+  const themeMode = useStore((state) => state.theme);
+  const accentText = ACCENT_TEXT[themeMode];
   const mainTab = useStore((state) => state.mainTab);
   const setMainTab = useStore((state) => state.setMainTab);
   const playbookSubTab = useStore((state) => state.playbookSubTab);
@@ -226,14 +239,16 @@ export function Layout({ children }: LayoutProps) {
                   <IconButton
                     onClick={() => setMainTab(tab.id)}
                     size="small"
+                    aria-label={tab.label}
+                    aria-pressed={mainTab === tab.id}
                     sx={{
                       p: 1,
                       borderRadius: 1,
-                      color: mainTab === tab.id ? 'primary.main' : 'text.secondary',
+                      color: mainTab === tab.id ? accentText : 'text.secondary',
                       bgcolor: mainTab === tab.id ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                       '&:hover': {
                         bgcolor: mainTab === tab.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                        color: mainTab === tab.id ? 'primary.main' : 'text.primary',
+                        color: mainTab === tab.id ? accentText : 'text.primary',
                       },
                     }}
                   >
@@ -253,17 +268,17 @@ export function Layout({ children }: LayoutProps) {
                     textTransform: 'none',
                     fontWeight: 500,
                     fontSize: '0.875rem',
-                    color: mainTab === tab.id ? 'primary.main' : 'text.secondary',
+                    color: mainTab === tab.id ? accentText : 'text.secondary',
                     bgcolor: mainTab === tab.id ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                     '&:hover': {
                       bgcolor: mainTab === tab.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                      color: mainTab === tab.id ? 'primary.main' : 'text.primary',
+                      color: mainTab === tab.id ? accentText : 'text.primary',
                     },
                   }}
                 >
                   {tab.label}
                   {tab.badge && (
-                    <Chip label={tab.badge} size="small" sx={getBadgeSx(tab.badge)} />
+                    <Chip label={tab.badge} size="small" sx={getBadgeSx(tab.badge, themeMode)} />
                   )}
                 </Button>
               )
@@ -344,12 +359,17 @@ export function Layout({ children }: LayoutProps) {
                   setMainTab('playbooks');
                   setPlaybookSubTab('active-execution');
                 }}
+                aria-label={
+                  activeExecutions.length === 1
+                    ? `1 execution ${activeExecutions[0].status}`
+                    : `${activeExecutions.length} executions running`
+                }
                 sx={{ position: 'relative', color: 'primary.main' }}
               >
                 <Badge
                   badgeContent={activeExecutions.length > 1 ? activeExecutions.length : 0}
                   color="primary"
-                  sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', minWidth: 16, height: 16 } }}
+                  sx={{ '& .MuiBadge-badge': { fontSize: '0.7rem', minWidth: 18, height: 18 } }}
                 >
                   <ActiveExecutionIcon />
                 </Badge>
@@ -362,7 +382,9 @@ export function Layout({ children }: LayoutProps) {
                     height: 8,
                     bgcolor: '#3b82f6',
                     borderRadius: '50%',
-                    animation: 'pulse 2s ease-in-out infinite',
+                    '@media (prefers-reduced-motion: no-preference)': {
+                      animation: 'pulse 2s ease-in-out infinite',
+                    },
                     '@keyframes pulse': {
                       '0%, 100%': { opacity: 1, transform: 'scale(1)' },
                       '50%': { opacity: 0.6, transform: 'scale(1.2)' },
@@ -390,7 +412,9 @@ export function Layout({ children }: LayoutProps) {
                         height: 8,
                         bgcolor: '#ef4444',
                         borderRadius: '50%',
-                        animation: 'pulse 2s ease-in-out infinite',
+                        '@media (prefers-reduced-motion: no-preference)': {
+                          animation: 'pulse 2s ease-in-out infinite',
+                        },
                         '@keyframes pulse': {
                           '0%, 100%': { opacity: 1, transform: 'scale(1)' },
                           '50%': { opacity: 0.6, transform: 'scale(1.2)' },
@@ -455,17 +479,17 @@ export function Layout({ children }: LayoutProps) {
                 fontWeight: 500,
                 fontSize: '0.8rem',
                 minHeight: 32,
-                color: playbookSubTab === tab.id ? 'primary.main' : 'text.secondary',
+                color: playbookSubTab === tab.id ? accentText : 'text.secondary',
                 bgcolor: playbookSubTab === tab.id ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
                 '&:hover': {
                   bgcolor: playbookSubTab === tab.id ? 'rgba(59, 130, 246, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                  color: playbookSubTab === tab.id ? 'primary.main' : 'text.primary',
+                  color: playbookSubTab === tab.id ? accentText : 'text.primary',
                 },
               }}
             >
               {tab.label}
               {tab.badge && (
-                <Chip label={tab.badge} size="small" sx={getBadgeSx(tab.badge)} />
+                <Chip label={tab.badge} size="small" sx={getBadgeSx(tab.badge, themeMode)} />
               )}
             </Button>
           ))}
@@ -483,11 +507,11 @@ export function Layout({ children }: LayoutProps) {
                 fontWeight: 500,
                 fontSize: '0.8rem',
                 minHeight: 32,
-                color: stackSubTab === tab.id ? 'primary.main' : 'text.secondary',
+                color: stackSubTab === tab.id ? accentText : 'text.secondary',
                 bgcolor: stackSubTab === tab.id ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
                 '&:hover': {
                   bgcolor: stackSubTab === tab.id ? 'rgba(59, 130, 246, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                  color: stackSubTab === tab.id ? 'primary.main' : 'text.primary',
+                  color: stackSubTab === tab.id ? accentText : 'text.primary',
                 },
               }}
             >

@@ -132,7 +132,10 @@ docker compose up              # Backend + frontend in containers
 ## Status
 
 Production ready and actively maintained — see `package.json` for the current
-version.
+version. The app's screens meet WCAG 2.1 AA, checked with `a11y.json` /
+`scripts/a11y-gate.js`; the one exception is reflow at a 320px viewport,
+which doesn't apply to a fixed-minimum-size Electron window (1024×768,
+`electron/main.ts`).
 
 This Electron app is being progressively superseded by Ignition-native
 successors in a sister repo (the "Toolbox" suite of Perspective projects,

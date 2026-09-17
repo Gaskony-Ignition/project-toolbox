@@ -166,11 +166,11 @@ export function PlaybookUpdatesDialog({ open, onClose }: PlaybookUpdatesDialogPr
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Tooltip title="Refresh updates">
-              <IconButton onClick={handleRefresh} size="small">
+              <IconButton onClick={handleRefresh} size="small" aria-label="Refresh updates">
                 <RefreshIcon />
               </IconButton>
             </Tooltip>
-            <IconButton onClick={onClose} size="small">
+            <IconButton onClick={onClose} size="small" aria-label="Close">
               <CloseIcon />
             </IconButton>
           </Box>

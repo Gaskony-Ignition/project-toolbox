@@ -28,6 +28,7 @@ import {
   FormControlLabel,
   TextField,
   Collapse,
+  ButtonBase,
 } from '@mui/material';
 import {
   Settings as ConfigureIcon,
@@ -380,6 +381,7 @@ export function PlaybookCard({ playbook, onConfigure, onExecute, onExport, onVie
               <IconButton
                 size="small"
                 onClick={(e) => setMenuAnchor(e.currentTarget)}
+                aria-label={`More options for ${playbook.name}`}
                 sx={{ p: 0.25 }}
               >
                 <MoreVertIcon fontSize="small" />
@@ -495,18 +497,20 @@ export function PlaybookCard({ playbook, onConfigure, onExecute, onExport, onVie
       </CardActions>
 
       {/* Expandable Details Toggle */}
-      <Box
+      <ButtonBase
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
+          width: '100%',
           py: 0.25,
           borderTop: '1px solid',
           borderColor: 'divider',
           '&:hover': { bgcolor: 'action.hover' },
         }}
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Hide playbook details' : 'Show playbook details'}
       >
         <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
           Details
@@ -520,7 +524,7 @@ export function PlaybookCard({ playbook, onConfigure, onExecute, onExport, onVie
             transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
           }}
         />
-      </Box>
+      </ButtonBase>
 
       {/* Expandable Details Content */}
       <Collapse in={expanded}>

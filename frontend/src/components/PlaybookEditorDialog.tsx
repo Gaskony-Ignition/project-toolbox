@@ -399,7 +399,7 @@ export function PlaybookEditorDialog({
           />
         </Tabs>
 
-        <IconButton onClick={handleClose} size="small">
+        <IconButton onClick={handleClose} size="small" aria-label="Close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>

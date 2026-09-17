@@ -27,6 +27,7 @@ import {
   Divider,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemSecondaryAction,
   Tooltip,
@@ -1126,6 +1127,7 @@ export function StackBuilder() {
               <IconButton
                 onClick={() => setSettingsDialogOpen(true)}
                 size="small"
+                aria-label="Stack settings"
                 sx={{
                   border: '1px solid',
                   borderColor: 'divider',
@@ -1209,6 +1211,7 @@ export function StackBuilder() {
                         <IconButton
                           size="small"
                           onClick={() => handleEditInstance(instance)}
+                          aria-label={`Configure ${instance.instance_name}`}
                         >
                           <SettingsIcon />
                         </IconButton>
@@ -1218,6 +1221,7 @@ export function StackBuilder() {
                           size="small"
                           color="error"
                           onClick={() => handleRemoveInstance(instance.instance_name)}
+                          aria-label={`Remove ${instance.instance_name}`}
                         >
                           <DeleteIcon />
                         </IconButton>
@@ -1336,24 +1340,18 @@ export function StackBuilder() {
               {savedStacks.map((stack) => (
                 <ListItem
                   key={stack.id}
+                  disablePadding
                   sx={{
                     border: 1,
                     borderColor: 'divider',
                     borderRadius: 1,
                     mb: 1,
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' },
                   }}
-                  onClick={() => handleLoadStack(stack)}
-                >
-                  <ListItemText
-                    primary={stack.stack_name}
-                    secondary={stack.description || `${stack.config_json.instances.length} services`}
-                  />
-                  <ListItemSecondaryAction>
+                  secondaryAction={
                     <IconButton
                       size="small"
                       color="error"
+                      aria-label={`Delete saved stack ${stack.stack_name}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!window.confirm(`Delete saved stack "${stack.stack_name}"?`)) return;
@@ -1362,7 +1360,14 @@ export function StackBuilder() {
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </ListItemSecondaryAction>
+                  }
+                >
+                  <ListItemButton onClick={() => handleLoadStack(stack)} sx={{ borderRadius: 1 }}>
+                    <ListItemText
+                      primary={stack.stack_name}
+                      secondary={stack.description || `${stack.config_json.instances.length} services`}
+                    />
+                  </ListItemButton>
                 </ListItem>
               ))}
             </List>

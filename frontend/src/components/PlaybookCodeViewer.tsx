@@ -293,13 +293,13 @@ export function PlaybookCodeViewer({
         </Box>
 
         <Tooltip title="Open in New Window">
-          <IconButton size="small" onClick={handlePopOut}>
+          <IconButton size="small" onClick={handlePopOut} aria-label="Open in new window">
             <PopOutIcon />
           </IconButton>
         </Tooltip>
 
         <Tooltip title="Close">
-          <IconButton size="small" onClick={onClose}>
+          <IconButton size="small" onClick={onClose} aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Tooltip>
@@ -389,7 +389,7 @@ export function PlaybookCodeViewer({
         {canEdit && (
           <>
             <Tooltip title="Refresh code from file">
-              <IconButton size="small" onClick={handleRefresh} disabled={isLoading}>
+              <IconButton size="small" onClick={handleRefresh} disabled={isLoading} aria-label="Refresh code from file">
                 <RefreshIcon />
               </IconButton>
             </Tooltip>

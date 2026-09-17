@@ -31,6 +31,7 @@ export function HelpTooltip({ content, size = 'small' }: HelpTooltipProps) {
     >
       <IconButton
         size={size}
+        aria-label={typeof content === 'string' ? content : 'Help'}
         sx={{
           ml: 0.5,
           p: 0.25,

@@ -27,6 +27,7 @@ import {
   CircularProgress,
   Divider,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -563,7 +564,7 @@ export function APIExplorer() {
         </Typography>
         <List dense>
           {endpoints.map((section) => (
-            <Box key={section.id}>
+            <ListItem key={section.id} disablePadding sx={{ display: 'block' }}>
               <ListItemButton onClick={() => toggleEndpoint(section.id)}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   {section.icon}
@@ -572,48 +573,49 @@ export function APIExplorer() {
                 {expandedEndpoints.includes(section.id) ? <ExpandIcon /> : <ChevronIcon />}
               </ListItemButton>
               <Collapse in={expandedEndpoints.includes(section.id)}>
-                <List dense sx={{ pl: 2 }}>
+                <List dense disablePadding sx={{ pl: 2 }}>
                   {section.children.map((child) => (
-                    <Tooltip
-                      key={child.path}
-                      title={child.description || ''}
-                      placement="right"
-                      arrow
-                    >
-                      <ListItemButton
-                        selected={requestPath === child.path}
-                        onClick={() => {
-                          setRequestPath(child.path);
-                          setRequestMethod(child.method || 'GET');
-                          setTabValue(2);
-                        }}
-                        sx={{
-                          borderRadius: 1,
-                          '&.Mui-selected': {
-                            bgcolor: 'action.selected',
-                          },
-                        }}
+                    <ListItem key={child.path} disablePadding>
+                      <Tooltip
+                        title={child.description || ''}
+                        placement="right"
+                        arrow
                       >
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            bgcolor: getMethodColor(child.method || 'GET'),
-                            mr: 1,
-                            flexShrink: 0,
+                        <ListItemButton
+                          selected={requestPath === child.path}
+                          onClick={() => {
+                            setRequestPath(child.path);
+                            setRequestMethod(child.method || 'GET');
+                            setTabValue(2);
                           }}
-                        />
-                        <ListItemText
-                          primary={child.label}
-                          primaryTypographyProps={{ variant: 'body2' }}
-                        />
-                      </ListItemButton>
-                    </Tooltip>
+                          sx={{
+                            borderRadius: 1,
+                            '&.Mui-selected': {
+                              bgcolor: 'action.selected',
+                            },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              bgcolor: getMethodColor(child.method || 'GET'),
+                              mr: 1,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <ListItemText
+                            primary={child.label}
+                            primaryTypographyProps={{ variant: 'body2' }}
+                          />
+                        </ListItemButton>
+                      </Tooltip>
+                    </ListItem>
                   ))}
                 </List>
               </Collapse>
-            </Box>
+            </ListItem>
           ))}
         </List>
       </Paper>
@@ -671,6 +673,7 @@ export function APIExplorer() {
                   onClick={() => deleteKeyMutation.mutate(selectedKey)}
                   size="small"
                   color="error"
+                  aria-label="Delete API key"
                 >
                   <DeleteIcon />
                 </IconButton>
@@ -872,6 +875,7 @@ export function APIExplorer() {
                   <Select
                     value={requestMethod}
                     onChange={(e) => setRequestMethod(e.target.value)}
+                    inputProps={{ 'aria-label': 'HTTP method' }}
                   >
                     <MenuItem value="GET">GET</MenuItem>
                     <MenuItem value="POST">POST</MenuItem>

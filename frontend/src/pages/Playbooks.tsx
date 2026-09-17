@@ -198,6 +198,7 @@ function SortableAccordion({
             <IconButton
               size="small"
               onClick={(e) => { e.stopPropagation(); onRename(); }}
+              aria-label={`Rename ${title}`}
               sx={{ p: 0.25 }}
             >
               <EditIcon fontSize="small" />
@@ -207,6 +208,7 @@ function SortableAccordion({
             <IconButton
               size="small"
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              aria-label={`Delete ${title}`}
               sx={{ p: 0.25, color: 'error.main' }}
             >
               <DeleteIcon fontSize="small" />
@@ -656,6 +658,7 @@ export function Playbooks({ domainFilter }: PlaybooksProps) {
               onClick={handleRefresh}
               size="small"
               color="primary"
+              aria-label="Refresh playbook list"
             >
               <RefreshIcon />
             </IconButton>

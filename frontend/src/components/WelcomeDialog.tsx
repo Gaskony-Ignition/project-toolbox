@@ -32,9 +32,12 @@ export function WelcomeDialog() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Check if user has already dismissed the welcome dialog
+    // Check if user has already dismissed the welcome dialog. A deep link
+    // (e.g. `?tab=api`) means the visitor already knows what they came for,
+    // so it skips the intro rather than covering the requested screen.
     const dismissed = localStorage.getItem(STORAGE_KEYS.WELCOME_DIALOG_DISMISSED);
-    if (!dismissed) {
+    const isDeepLink = new URLSearchParams(window.location.search).has('tab');
+    if (!dismissed && !isDeepLink) {
       setOpen(true);
     }
   }, []);

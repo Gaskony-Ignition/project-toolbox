@@ -110,7 +110,7 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
         )}
         <Box sx={{ flex: 1 }} />
         <Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
-          <IconButton size="small" onClick={handleCopy}>
+          <IconButton size="small" onClick={handleCopy} aria-label={copied ? 'Copied' : 'Copy JSON'}>
             <CopyIcon fontSize="small" />
           </IconButton>
         </Tooltip>

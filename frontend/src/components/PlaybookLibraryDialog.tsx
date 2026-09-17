@@ -208,11 +208,11 @@ export function PlaybookLibraryDialog({ open, onClose }: PlaybookLibraryDialogPr
           <Typography variant="h6">Playbook Library</Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Tooltip title="Refresh library">
-              <IconButton onClick={handleRefresh} size="small">
+              <IconButton onClick={handleRefresh} size="small" aria-label="Refresh library">
                 <RefreshIcon />
               </IconButton>
             </Tooltip>
-            <IconButton onClick={onClose} size="small">
+            <IconButton onClick={onClose} size="small" aria-label="Close">
               <CloseIcon />
             </IconButton>
           </Box>

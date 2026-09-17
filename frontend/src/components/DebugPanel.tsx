@@ -21,6 +21,7 @@ import {
   Divider,
   Chip,
   TextField,
+  ButtonBase,
 } from '@mui/material';
 import {
   BugReport as BugIcon,
@@ -300,72 +301,80 @@ export function DebugPanel({ executionId }: DebugPanelProps) {
                 Copy and paste these prompts into your Claude Code chat:
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `Analyze this debug context and explain why the step failed:\n\nStep: ${debugContext.step_name}\nType: ${debugContext.step_type}\nError: ${debugContext.error}\n\nParameters: ${JSON.stringify(debugContext.step_parameters, null, 2)}`
-                    );
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    📋 Analyze Failure
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Ask me to analyze why the step failed
-                  </Typography>
+                <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+                  <ButtonBase
+                    sx={{ display: 'block', width: '100%', textAlign: 'left', p: 2, '&:hover': { bgcolor: 'action.hover' } }}
+                    aria-label="Copy prompt: analyze failure"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `Analyze this debug context and explain why the step failed:\n\nStep: ${debugContext.step_name}\nType: ${debugContext.step_type}\nError: ${debugContext.error}\n\nParameters: ${JSON.stringify(debugContext.step_parameters, null, 2)}`
+                      );
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                      📋 Analyze Failure
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Ask me to analyze why the step failed
+                    </Typography>
+                  </ButtonBase>
                 </Paper>
 
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `Based on this HTML, suggest better selectors for finding elements:\n\n${debugContext.page_html?.substring(0, 2000) || 'No HTML available'}`
-                    );
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    🔍 Suggest Selectors
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Get alternative CSS selectors from the HTML
-                  </Typography>
+                <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+                  <ButtonBase
+                    sx={{ display: 'block', width: '100%', textAlign: 'left', p: 2, '&:hover': { bgcolor: 'action.hover' } }}
+                    aria-label="Copy prompt: suggest selectors"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `Based on this HTML, suggest better selectors for finding elements:\n\n${debugContext.page_html?.substring(0, 2000) || 'No HTML available'}`
+                      );
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                      🔍 Suggest Selectors
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Get alternative CSS selectors from the HTML
+                    </Typography>
+                  </ButtonBase>
                 </Paper>
 
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `Generate a fix for this failed step and show me the corrected YAML:\n\nStep: ${debugContext.step_name}\nError: ${debugContext.error}\n\nCurrent parameters: ${JSON.stringify(debugContext.step_parameters, null, 2)}`
-                    );
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    🔧 Generate Fix
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Ask me to generate a corrected step definition
-                  </Typography>
+                <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+                  <ButtonBase
+                    sx={{ display: 'block', width: '100%', textAlign: 'left', p: 2, '&:hover': { bgcolor: 'action.hover' } }}
+                    aria-label="Copy prompt: generate fix"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `Generate a fix for this failed step and show me the corrected YAML:\n\nStep: ${debugContext.step_name}\nError: ${debugContext.error}\n\nCurrent parameters: ${JSON.stringify(debugContext.step_parameters, null, 2)}`
+                      );
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                      🔧 Generate Fix
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Ask me to generate a corrected step definition
+                    </Typography>
+                  </ButtonBase>
                 </Paper>
 
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `Explain what this step is trying to do and provide troubleshooting advice:\n\nStep: ${debugContext.step_name}\nType: ${debugContext.step_type}\n\nParameters: ${JSON.stringify(debugContext.step_parameters, null, 2)}`
-                    );
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    💡 Explain Step
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Understand what the step does and get troubleshooting tips
-                  </Typography>
+                <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+                  <ButtonBase
+                    sx={{ display: 'block', width: '100%', textAlign: 'left', p: 2, '&:hover': { bgcolor: 'action.hover' } }}
+                    aria-label="Copy prompt: explain step"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `Explain what this step is trying to do and provide troubleshooting advice:\n\nStep: ${debugContext.step_name}\nType: ${debugContext.step_type}\n\nParameters: ${JSON.stringify(debugContext.step_parameters, null, 2)}`
+                      );
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                      💡 Explain Step
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Understand what the step does and get troubleshooting tips
+                    </Typography>
+                  </ButtonBase>
                 </Paper>
               </Box>
             </Box>

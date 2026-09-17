@@ -18,6 +18,7 @@ import {
   Chip,
   Tooltip,
   Paper,
+  ButtonBase,
 } from '@mui/material';
 import {
   Pending as PendingIcon,
@@ -132,7 +133,7 @@ export function ExecutionTimeline({
                   sx={{
                     color: 'text.disabled',
                     fontFamily: 'monospace',
-                    fontSize: '0.65rem',
+                    fontSize: '0.7rem',
                   }}
                 >
                   {timeBetween}
@@ -178,14 +179,20 @@ export function ExecutionTimeline({
               {/* Step content */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {/* Step header */}
-                <Box
+                <ButtonBase
+                  disabled={!hasDetails}
+                  disableRipple={!hasDetails}
+                  onClick={() => hasDetails && toggleStep(step.step_id)}
+                  aria-expanded={hasDetails ? isExpanded : undefined}
+                  aria-label={hasDetails ? `${isExpanded ? 'Collapse' : 'Expand'} details for ${step.step_name || `Step ${index + 1}`}` : undefined}
                   sx={{
                     display: 'flex',
+                    width: '100%',
                     alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
                     gap: 1,
-                    cursor: hasDetails ? 'pointer' : 'default',
                   }}
-                  onClick={() => hasDetails && toggleStep(step.step_id)}
                 >
                   <Typography
                     variant={compact ? 'body2' : 'subtitle2'}
@@ -208,7 +215,7 @@ export function ExecutionTimeline({
                         size="small"
                         sx={{
                           height: compact ? 18 : 22,
-                          fontSize: compact ? '0.65rem' : '0.7rem',
+                          fontSize: compact ? '0.7rem' : '0.75rem',
                           '& .MuiChip-icon': { ml: 0.5 },
                           '& .MuiChip-label': { px: 0.75 },
                         }}
@@ -221,6 +228,8 @@ export function ExecutionTimeline({
                     <IconButton
                       size="small"
                       sx={{ p: 0.25 }}
+                      tabIndex={-1}
+                      aria-hidden="true"
                     >
                       {isExpanded ? (
                         <ExpandLessIcon sx={{ fontSize: '1rem' }} />
@@ -229,7 +238,7 @@ export function ExecutionTimeline({
                       )}
                     </IconButton>
                   )}
-                </Box>
+                </ButtonBase>
 
                 {/* Duration progress bar */}
                 {step.started_at && !compact && (
@@ -261,7 +270,7 @@ export function ExecutionTimeline({
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: compact ? '0.65rem' : '0.7rem', display: 'block', mt: 0.25 }}
+                    sx={{ fontSize: compact ? '0.7rem' : '0.75rem', display: 'block', mt: 0.25 }}
                   >
                     Completed at {new Date(step.completed_at).toLocaleTimeString()}
                   </Typography>

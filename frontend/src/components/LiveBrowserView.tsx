@@ -195,7 +195,9 @@ export function LiveBrowserView({ executionId }: LiveBrowserViewProps) {
                 sx={{
                   position: 'absolute',
                   pointerEvents: 'none',
-                  animation: 'ripple 1s ease-out',
+                  '@media (prefers-reduced-motion: no-preference)': {
+                    animation: 'ripple 1s ease-out',
+                  },
                   '@keyframes ripple': {
                     '0%': {
                       width: '10px',
@@ -256,7 +258,9 @@ export function LiveBrowserView({ executionId }: LiveBrowserViewProps) {
             size="small"
             color="success"
             sx={{
-              animation: 'pulse 2s infinite',
+              '@media (prefers-reduced-motion: no-preference)': {
+                animation: 'pulse 2s infinite',
+              },
               '@keyframes pulse': {
                 '0%, 100%': { opacity: 1 },
                 '50%': { opacity: 0.5 },

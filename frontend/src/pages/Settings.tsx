@@ -8,6 +8,7 @@ import {
   Box,
   Typography,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -44,6 +45,7 @@ import {
   Terminal as LogsIcon,
   GitHub as GitHubIcon,
 } from '@mui/icons-material';
+import { ACCENT_TEXT } from '../theme/accentText';
 import { Credentials } from './Credentials';
 import { DiagnosticsSection, DataManagementSection, LogsSection } from '../components/DiagnosticsPanel';
 import { api } from '../api/client';
@@ -77,6 +79,7 @@ export function Settings() {
     downloaded: false,
   });
   const theme = useStore((state) => state.theme);
+  const accentText = ACCENT_TEXT[theme];
   const setTheme = useStore((state) => state.setTheme);
   const playbookGridColumns = useStore((state) => state.playbookGridColumns);
   const setPlaybookGridColumns = useStore((state) => state.setPlaybookGridColumns);
@@ -776,39 +779,39 @@ export function Settings() {
         >
           <List sx={{ p: 1 }}>
             {settingsTabs.map((tab) => (
-              <ListItemButton
-                key={tab.id}
-                selected={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                sx={{
-                  borderRadius: 1,
-                  mb: 0.5,
-                  '&.Mui-selected': {
-                    bgcolor: 'rgba(59, 130, 246, 0.15)',
-                    color: 'primary.main',
+              <ListItem key={tab.id} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  selected={activeTab === tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  sx={{
+                    borderRadius: 1,
+                    '&.Mui-selected': {
+                      bgcolor: 'rgba(59, 130, 246, 0.15)',
+                      color: accentText,
+                      '&:hover': {
+                        bgcolor: 'rgba(59, 130, 246, 0.25)',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: accentText,
+                      },
+                    },
                     '&:hover': {
-                      bgcolor: 'rgba(59, 130, 246, 0.25)',
+                      bgcolor: 'action.hover',
                     },
-                    '& .MuiListItemIcon-root': {
-                      color: 'primary.main',
-                    },
-                  },
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 36, color: activeTab === tab.id ? 'primary.main' : 'text.secondary' }}>
-                  {tab.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={tab.label}
-                  primaryTypographyProps={{
-                    fontSize: '0.875rem',
-                    fontWeight: activeTab === tab.id ? 600 : 400,
                   }}
-                />
-              </ListItemButton>
+                >
+                  <ListItemIcon sx={{ minWidth: 36, color: activeTab === tab.id ? accentText : 'text.secondary' }}>
+                    {tab.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={tab.label}
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: activeTab === tab.id ? 600 : 400,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
           </List>
         </Paper>

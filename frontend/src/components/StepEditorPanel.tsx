@@ -219,6 +219,7 @@ export function StepEditorPanel({
               <Select
                 value={step.on_failure ?? 'abort'}
                 onChange={(e) => handleMetaChange('on_failure', e.target.value)}
+                inputProps={{ 'aria-label': 'On Failure' }}
               >
                 <MenuItem value="abort">Abort - Stop playbook execution</MenuItem>
                 <MenuItem value="continue">Continue - Proceed to next step</MenuItem>
@@ -277,6 +278,7 @@ function ParameterInput({
           onChange={(e) => onChange(e.target.value)}
           size="small"
           fullWidth
+          inputProps={{ 'aria-label': parameter.name }}
         >
           {parameter.options.map((option) => (
             <MenuItem key={option} value={option}>
@@ -334,6 +336,7 @@ function ParameterInput({
             size="small"
             fullWidth
             displayEmpty
+            inputProps={{ 'aria-label': parameter.name }}
           >
             <MenuItem value="" disabled>
               Select credential...
@@ -450,7 +453,7 @@ function ParameterInput({
         <Chip
           label={parameter.type}
           size="small"
-          sx={{ fontSize: '0.65rem', height: 18 }}
+          sx={{ fontSize: '0.7rem', height: 18 }}
         />
         {parameter.description && (
           <HelpTooltip size="small" content={parameter.description} />

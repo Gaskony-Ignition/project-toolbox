@@ -280,7 +280,7 @@ function SortableStepItem({
               label={step.type}
               size="small"
               variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 20 }}
+              sx={{ fontSize: '0.7rem', height: 20 }}
             />
           </Box>
           {stepType && (
@@ -298,12 +298,12 @@ function SortableStepItem({
         {/* Actions */}
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Tooltip title="Edit step">
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(); }} aria-label="Edit step">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Duplicate step">
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} aria-label="Duplicate step">
               <DuplicateIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -312,11 +312,16 @@ function SortableStepItem({
               size="small"
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
               sx={{ color: 'error.main' }}
+              aria-label="Delete step"
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+          <IconButton
+            size="small"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            aria-label={isEditing ? 'Collapse step editor' : 'Expand step editor'}
+          >
             {isEditing ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         </Box>

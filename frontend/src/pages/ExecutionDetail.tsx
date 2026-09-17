@@ -422,9 +422,9 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
                     size="small"
                     sx={{
                       height: '18px',
-                      fontSize: '0.65rem',
+                      fontSize: '0.7rem',
                       bgcolor: '#333',
-                      color: '#888',
+                      color: '#bbb',
                     }}
                   />
                 )}
@@ -432,7 +432,7 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
               <Button
                 size="small"
                 onClick={() => refetchLogs()}
-                sx={{ color: '#888', fontSize: '0.7rem', minWidth: 'auto', p: 0.5 }}
+                sx={{ color: '#999', fontSize: '0.7rem', minWidth: 'auto', p: 0.5 }}
               >
                 Refresh
               </Button>
@@ -462,7 +462,7 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
                     <Typography
                       component="span"
                       sx={{
-                        color: '#666',
+                        color: '#999',
                         fontSize: '0.7rem',
                         minWidth: '80px',
                         flexShrink: 0,
@@ -515,7 +515,7 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
                   </Box>
                 ))
               ) : (
-                <Typography sx={{ color: '#666', fontStyle: 'italic' }}>
+                <Typography sx={{ color: '#999', fontStyle: 'italic' }}>
                   No logs captured for this execution yet.
                 </Typography>
               )}
@@ -557,6 +557,7 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
                   <IconButton
                     size="small"
                     onClick={() => setStepViewMode(stepViewMode === 'list' ? 'timeline' : 'list')}
+                    aria-label={stepViewMode === 'list' ? 'Switch to timeline view' : 'Switch to list view'}
                     sx={{ p: 0.5 }}
                   >
                     {stepViewMode === 'list' ? (
@@ -612,7 +613,7 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
                         secondary={
                           <>
                             {step.error ? (
-                              <Typography variant="caption" color="error" sx={{ fontSize: '0.65rem' }}>
+                              <Typography variant="caption" color="error" sx={{ fontSize: '0.7rem' }}>
                                 Error: {step.error}
                               </Typography>
                             ) : step.completed_at ? (
@@ -655,7 +656,7 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
                         label={step.status}
                         size="small"
                         color={getStatusChipColor(step.status)}
-                        sx={{ height: '20px', fontSize: '0.65rem', '& .MuiChip-label': { px: 1, py: 0 } }}
+                        sx={{ height: '20px', fontSize: '0.7rem', '& .MuiChip-label': { px: 1, py: 0 } }}
                       />
                     </ListItem>
                     {index < deduplicatedStepResults.length - 1 && <Divider />}
@@ -688,11 +689,11 @@ export function ExecutionDetail({ executionId }: ExecutionDetailProps) {
               minHeight: '400px',
             }}
           >
-            <VisibilityOffIcon sx={{ fontSize: 48, color: '#666', mb: 2 }} />
+            <VisibilityOffIcon sx={{ fontSize: 48, color: '#999', mb: 2 }} />
             <Typography variant="h6" sx={{ color: '#999' }}>
               No browser view available for this playbook
             </Typography>
-            <Typography variant="body2" sx={{ color: '#666', mt: 1 }}>
+            <Typography variant="body2" sx={{ color: '#999', mt: 1 }}>
               Domain: {execution?.domain || 'unknown'}
             </Typography>
           </Paper>

@@ -54,11 +54,16 @@ const themeColors = {
     surface: '#1E293B',         // Lighter panel surface
     surfaceVariant: '#1E293B',
     border: '#334155',          // Slate border
-    primary: '#3B82F6',         // Blue 500
+    // Blue 500 (#3B82F6) and Red 500 (#EF4444) read fine on the page
+    // background but drop under 4.5:1 as plain text on the lighter card
+    // surface (#1E293B) -- Blue 400 / Red 400 keep the same hue family and
+    // pass on both (WCAG 1.4.3). Contained buttons need a darker blue
+    // behind white text instead; see the MuiButton override below.
+    primary: '#60A5FA',         // Blue 400
     secondary: '#1D4ED8',       // Blue 700
     success: '#22C55E',         // Green 500
     warning: '#F59E0B',         // Amber 500
-    error: '#EF4444',           // Red 500
+    error: '#F87171',           // Red 400
     text: '#F8FAFC',            // Slate 50
     textSecondary: '#94A3B8',   // Slate 400
   },
@@ -90,6 +95,12 @@ function createAppTheme(themeMode: 'dark' | 'light') {
         main: colors.primary,
         light: themeMode === 'dark' ? '#79c0ff' : '#54aeff',
         dark: colors.secondary,
+        // MUI derives contrastText from primary.main's own lightness, which
+        // now picks black once main is the lighter Blue 400 (needed as
+        // plain text, above) -- but the containedPrimary/filledPrimary
+        // overrides below always paint a darker blue behind that text, so
+        // white is the one that actually passes there (WCAG 1.4.3).
+        ...(themeMode === 'dark' && { contrastText: '#ffffff' }),
       },
       secondary: {
         main: colors.secondary,
@@ -102,6 +113,7 @@ function createAppTheme(themeMode: 'dark' | 'light') {
       },
       error: {
         main: colors.error,
+        ...(themeMode === 'dark' && { contrastText: '#ffffff' }),
       },
       background: {
         default: colors.background,
@@ -114,6 +126,24 @@ function createAppTheme(themeMode: 'dark' | 'light') {
       divider: colors.border,
     },
     components: {
+      // A visible focus ring for every element that can take keyboard focus
+      // (WCAG 2.4.7). MUI's own focus-visible treatment is a background
+      // tint, not an outline, so it never showed up as a ring at all on
+      // plain divs like ListItemButton (no wrapping <li>) or a custom
+      // clickable row -- this is the one global rule that covers all of
+      // them, instead of patching each component's own focus style.
+      MuiCssBaseline: {
+        styleOverrides: {
+          // !important: several MUI components (ButtonBase among them) set
+          // their own `outline: 0` at the class level, which otherwise
+          // outranks this plain pseudo-class selector regardless of sheet
+          // order.
+          ':focus-visible': {
+            outline: `2px solid ${colors.primary} !important`,
+            outlineOffset: '2px',
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {
@@ -122,6 +152,42 @@ function createAppTheme(themeMode: 'dark' | 'light') {
           },
         },
       },
+      // role="progressbar" needs its own accessible name wherever it renders
+      // (WCAG 4.1.2) -- most spinners here swap in for an already-labelled
+      // button's icon, but a few are standalone loading states. One default
+      // covers every case; a specific spot can still pass its own
+      // aria-label to override it.
+      MuiCircularProgress: {
+        defaultProps: {
+          'aria-label': 'Loading',
+        },
+      },
+      // The brand blue and red (as bare text, now Blue 400 / Red 400 above)
+      // only reach ~2.5-2.8:1 against white button text — well under the
+      // 4.5:1 floor (WCAG 1.4.3). Dark mode's surfaces are dark enough that
+      // a deeper shade is needed behind white text specifically; light
+      // mode's primary already passes as-is (5.2:1) against white, so it's
+      // left alone.
+      ...(themeMode === 'dark' && {
+        MuiButton: {
+          styleOverrides: {
+            containedPrimary: {
+              backgroundColor: '#2563eb',
+              '&:hover': { backgroundColor: colors.secondary },
+            },
+            containedError: {
+              backgroundColor: '#dc2626',
+              '&:hover': { backgroundColor: '#b91c1c' },
+            },
+          },
+        },
+        MuiChip: {
+          styleOverrides: {
+            filledPrimary: { backgroundColor: '#2563eb' },
+            filledError: { backgroundColor: '#dc2626' },
+          },
+        },
+      }),
     },
   });
 }
@@ -162,8 +228,11 @@ function AppContent() {
             );
           case 'active-execution':
             if (!activeExecutionId) {
+              // De-emphasised via text.secondary alone, not opacity: halving
+              // opacity on top of an already-muted colour drops it below the
+              // 4.5:1 contrast floor (WCAG 1.4.3).
               return (
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', opacity: 0.5 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
                   <Typography variant="h6" color="text.secondary" gutterBottom>
                     No Active Execution
                   </Typography>

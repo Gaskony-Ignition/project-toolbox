@@ -1,0 +1,20 @@
+{
+  "web": [
+    "http://localhost:3000/?tab=playbooks&sub=gateway",
+    "http://localhost:3000/?tab=playbooks&sub=perspective",
+    "http://localhost:3000/?tab=playbooks&sub=active-execution",
+    "http://localhost:3000/?tab=playbooks&sub=past-executions",
+    "http://localhost:3000/?tab=api",
+    "http://localhost:3000/?tab=stackbuilder&stackSub=services",
+    "http://localhost:3000/?tab=stackbuilder&stackSub=integrations",
+    "http://localhost:3000/?tab=stackbuilder&stackSub=preview",
+    "http://localhost:3000/?tab=udtbuilder",
+    "http://localhost:3000/?tab=settings"
+  ],
+  "exceptions": [
+    {
+      "rule": "horizontal-scroll-320",
+      "reason": "Electron desktop app, not a responsive web page -- the window's own minimum size is 1024x768 (electron/main.ts), well above the 320 CSS px reflow target, so a 320px layout is never reachable by a real user."
+    }
+  ]
+}

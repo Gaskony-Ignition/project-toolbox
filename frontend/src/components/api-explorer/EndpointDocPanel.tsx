@@ -113,7 +113,7 @@ export function EndpointDocPanel({
                 <TableCell sx={{ py: 0.25, fontFamily: 'monospace', fontSize: '0.8rem' }}>
                   {param.name}
                   {param.required && (
-                    <Chip label="required" size="small" color="error" variant="outlined" sx={{ ml: 0.5, height: 18, fontSize: '0.65rem' }} />
+                    <Chip label="required" size="small" color="error" variant="outlined" sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }} />
                   )}
                 </TableCell>
                 <TableCell sx={{ py: 0.25, fontSize: '0.8rem', color: 'text.secondary' }}>

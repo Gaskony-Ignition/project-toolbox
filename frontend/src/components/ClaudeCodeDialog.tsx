@@ -212,6 +212,7 @@ export function ClaudeCodeDialog({
                     size="small"
                     onClick={handleCopy}
                     color={copied ? 'success' : 'default'}
+                    aria-label={copied ? 'Copied' : 'Copy to clipboard'}
                   >
                     {copied ? <CheckIcon fontSize="small" /> : <CopyIcon fontSize="small" />}
                   </IconButton>

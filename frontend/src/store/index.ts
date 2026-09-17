@@ -9,27 +9,43 @@ import { MAIN_TABS, PLAYBOOK_SUB_TABS, STACK_SUB_TABS, type MainTab, type Playbo
 
 export type { MainTab, PlaybookSubTab, StackSubTab } from '../constants/navigation';
 
-// Initialize tab state from localStorage
+// A `?tab=`/`&sub=`/`&stackSub=` query param seeds the initial tab state ahead
+// of localStorage, so a screen can be deep-linked (bookmarked, shared, or
+// driven by an accessibility/UI check) without waiting on stored state. Tab
+// navigation itself stays tab-based, not router-based: this only affects the
+// very first render.
+const urlParam = (name: string): string | null =>
+  typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get(name);
+
+// Initialize tab state from the URL, then localStorage
 const getInitialMainTab = (): MainTab => {
+  const fromUrl = urlParam('tab');
+  if (MAIN_TABS.includes(fromUrl as MainTab)) return fromUrl as MainTab;
   const stored = localStorage.getItem(STORAGE_KEYS.MAIN_TAB);
   const valid = MAIN_TABS;
   return valid.includes(stored as MainTab) ? (stored as MainTab) : 'playbooks';
 };
 
 const getInitialPlaybookSubTab = (): PlaybookSubTab => {
+  const fromUrl = urlParam('sub');
+  if (PLAYBOOK_SUB_TABS.includes(fromUrl as PlaybookSubTab)) return fromUrl as PlaybookSubTab;
   const stored = localStorage.getItem(STORAGE_KEYS.PLAYBOOK_SUB_TAB);
   const valid = PLAYBOOK_SUB_TABS;
   return valid.includes(stored as PlaybookSubTab) ? (stored as PlaybookSubTab) : 'gateway';
 };
 
 const getInitialStackSubTab = (): StackSubTab => {
+  const fromUrl = urlParam('stackSub');
+  if (STACK_SUB_TABS.includes(fromUrl as StackSubTab)) return fromUrl as StackSubTab;
   const stored = localStorage.getItem(STORAGE_KEYS.STACK_SUB_TAB);
   const valid = STACK_SUB_TABS;
   return valid.includes(stored as StackSubTab) ? (stored as StackSubTab) : 'services';
 };
 
-// Initialize theme from localStorage or default to 'dark'
+// Initialize theme from the URL, then localStorage, defaulting to 'dark'
 const getInitialTheme = (): 'dark' | 'light' => {
+  const fromUrl = urlParam('theme');
+  if (fromUrl === 'light' || fromUrl === 'dark') return fromUrl;
   const stored = localStorage.getItem(STORAGE_KEYS.THEME);
   return (stored === 'light' || stored === 'dark') ? stored : 'dark';
 };

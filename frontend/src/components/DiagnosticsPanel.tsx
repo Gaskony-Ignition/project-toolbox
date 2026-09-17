@@ -121,7 +121,7 @@ export function DiagnosticsSection() {
           <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
             System Health
           </Typography>
-          <IconButton size="small" onClick={fetchHealth} disabled={healthLoading}>
+          <IconButton size="small" onClick={fetchHealth} disabled={healthLoading} aria-label="Refresh system health">
             {healthLoading ? <CircularProgress size={16} /> : <RefreshIcon fontSize="small" />}
           </IconButton>
         </Box>
@@ -587,25 +587,27 @@ export function LogsSection() {
               size="small"
               onClick={() => setAutoRefresh(!autoRefresh)}
               color={autoRefresh ? 'primary' : 'default'}
+              aria-label={autoRefresh ? 'Stop auto-refresh' : 'Start auto-refresh'}
+              aria-pressed={autoRefresh}
             >
               {autoRefresh ? <PauseIcon /> : <PlayIcon />}
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Refresh logs">
-            <IconButton size="small" onClick={fetchLogs} disabled={logsLoading}>
+            <IconButton size="small" onClick={fetchLogs} disabled={logsLoading} aria-label="Refresh logs">
               <RefreshIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Export logs">
-            <IconButton size="small" onClick={handleExportLogs} disabled={logs.length === 0}>
+            <IconButton size="small" onClick={handleExportLogs} disabled={logs.length === 0} aria-label="Export logs">
               <DownloadIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Clear logs">
-            <IconButton size="small" onClick={handleClearLogs} color="error">
+            <IconButton size="small" onClick={handleClearLogs} color="error" aria-label="Clear logs">
               <ClearIcon />
             </IconButton>
           </Tooltip>
